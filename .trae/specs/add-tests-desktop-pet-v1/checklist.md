@@ -1,0 +1,5 @@
+- [ ] `apps/desktop-pet/helper-win` 支持 `cargo test` 且全部通过（Windows）
+- [ ] helper-win 覆盖 `/health`、`/events`、`/control` 的最小集成测试通过
+- [ ] Godot headless 自检脚本存在且可运行：退出码 0
+- [ ] `scripts/verify.ps1` 存在：能跑 Rust 测试；若提供/探测到 GodotExe 能跑自检；无 Godot 时提示跳过
+- [x] 验证脚本与测试过程不输出/不持久化任何 API Key

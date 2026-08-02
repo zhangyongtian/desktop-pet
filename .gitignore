@@ -1,0 +1,7 @@
+apps/desktop-pet/helper-win/target/
+apps/desktop-pet/godot/.godot/
+apps/desktop-pet/dist/
+apps/desktop-pet/installer/payload/*
+!apps/desktop-pet/installer/payload/.gitkeep
+apps/desktop-pet/installer/output/
+.ci/

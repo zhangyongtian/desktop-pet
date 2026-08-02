@@ -1,0 +1,84 @@
+name: windows-build
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y --no-progress
+
+      - name: Build helper-win (test + release)
+        shell: pwsh
+        run: |
+          Push-Location apps/desktop-pet/helper-win
+          cargo test
+          cargo build --release
+          Pop-Location
+
+      - name: Download Godot (binary + export templates)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $godotVersion = "4.2.2-stable"
+          $godotVerDir = "4.2.2.stable"
+          $workDir = Join-Path $env:GITHUB_WORKSPACE ".ci\godot"
+          New-Item -ItemType Directory -Force -Path $workDir | Out-Null
+
+          $exeZip = Join-Path $workDir "godot.zip"
+          $tpz = Join-Path $workDir "templates.tpz"
+
+          Invoke-WebRequest -Uri "https://github.com/godotengine/godot/releases/download/$godotVersion/Godot_v$godotVersion_win64.exe.zip" -OutFile $exeZip
+          Invoke-WebRequest -Uri "https://github.com/godotengine/godot/releases/download/$godotVersion/Godot_v$godotVersion_export_templates.tpz" -OutFile $tpz
+
+          $exeDir = Join-Path $workDir "exe"
+          New-Item -ItemType Directory -Force -Path $exeDir | Out-Null
+          Expand-Archive -Path $exeZip -DestinationPath $exeDir -Force
+          $godotExe = Get-ChildItem $exeDir -Recurse -Filter "*.exe" | Select-Object -First 1 -ExpandProperty FullName
+          if (-not $godotExe) { throw "Godot exe not found" }
+
+          $tplDir = Join-Path $env:APPDATA "Godot\export_templates\$godotVerDir"
+          New-Item -ItemType Directory -Force -Path $tplDir | Out-Null
+          $tplExtract = Join-Path $workDir "tpl"
+          New-Item -ItemType Directory -Force -Path $tplExtract | Out-Null
+          Expand-Archive -Path $tpz -DestinationPath $tplExtract -Force
+          Copy-Item -Path (Join-Path $tplExtract "templates\*") -Destination $tplDir -Recurse -Force
+
+          "GODOT_EXE=$godotExe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Export Godot Windows build
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $outDir = Join-Path $env:GITHUB_WORKSPACE "apps\desktop-pet\dist"
+          New-Item -ItemType Directory -Force -Path $outDir | Out-Null
+          & $env:GODOT_EXE --headless --path "apps/desktop-pet/godot" --export-release "Windows Desktop" (Join-Path $outDir "desktop-pet.exe")
+          if ($LASTEXITCODE -ne 0) { throw "Godot export failed: $LASTEXITCODE" }
+
+      - name: Run self-check
+        shell: pwsh
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1 -GodotExe "$env:GODOT_EXE"
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $ver = "0.1.${{ github.run_number }}"
+          powershell -NoProfile -ExecutionPolicy Bypass -File apps/desktop-pet/installer/build.ps1 `
+            -ExportDir apps/desktop-pet/dist `
+            -HelperExePath apps/desktop-pet/helper-win/target/release/helper-win.exe `
+            -Version $ver
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DesktopPet-Installer
+          path: apps/desktop-pet/installer/output/*.exe

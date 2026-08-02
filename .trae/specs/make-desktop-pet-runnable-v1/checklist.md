@@ -1,0 +1,5 @@
+- [x] 安装后可直接启动：双击 desktop-pet.exe 可打开；5 秒内 `http://127.0.0.1:28999/health` 返回 `ok`（helper 自动启动或连接成功）
+- [x] helper 不可用时可降级：UI 明确提示“采集暂不可用/启动 helper 失败”，但仍可打开面板并在【任务】新增/勾选任务
+- [x] DeepSeek 未配置时可降级：在【报表】点击“运行总结”输出友好提示（缺少 API Key/Endpoint/Model），应用不崩溃且采集仍可运行（events.jsonl 仍增长）
+- [x] 安装与卸载闭环：安装目录包含 desktop-pet.exe 与 helper-win.exe；卸载时勾选“同时清除记忆目录（AppData）”会删除 `%APPDATA%\Godot\app_userdata\desktop-pet`
+- [x] 验收步骤可复现：完成“安装→启动→采集→总结→卸载清理”，并能在 `%APPDATA%\Godot\app_userdata\desktop-pet\memory\events.jsonl` 看到 `helper/typing` 或 `helper/clipboard` 事件；配置完成后“运行总结”产出非空文本且 `%APPDATA%\Godot\app_userdata\desktop-pet\memory\essence.json` 新增条目

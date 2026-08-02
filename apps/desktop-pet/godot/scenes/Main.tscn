@@ -1,0 +1,337 @@
+[gd_scene load_steps=16 format=3]
+
+[ext_resource type="Script" path="res://scripts/Main.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/StateMachine.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/PopupPanel.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/PetVisual.gd" id="16"]
+[ext_resource type="Script" path="res://scripts/TaskPanel.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/ReportPanel.gd" id="5"]
+[ext_resource type="Script" path="res://scripts/SettingsPanel.gd" id="6"]
+[ext_resource type="Script" path="res://scripts/ChatPanel.gd" id="7"]
+[ext_resource type="Script" path="res://scripts/TaskStore.gd" id="8"]
+[ext_resource type="Script" path="res://scripts/MemoryStore.gd" id="9"]
+[ext_resource type="Script" path="res://scripts/ConfigStore.gd" id="10"]
+[ext_resource type="Script" path="res://scripts/DeepSeekClient.gd" id="11"]
+[ext_resource type="Script" path="res://scripts/SummarizationPipeline.gd" id="12"]
+[ext_resource type="Script" path="res://scripts/ReportGenerator.gd" id="13"]
+[ext_resource type="Script" path="res://scripts/ChatService.gd" id="14"]
+[ext_resource type="Script" path="res://scripts/HelperBridge.gd" id="15"]
+
+[node name="Main" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")
+
+[node name="PetButton" type="TextureButton" parent="."]
+expand = true
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -60.0
+offset_top = -20.0
+offset_right = 60.0
+offset_bottom = 20.0
+stretch_mode = 6
+script = ExtResource("16")
+
+[node name="Zzz" type="Label" parent="PetButton"]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 70.0
+offset_top = -10.0
+offset_right = 120.0
+offset_bottom = 20.0
+text = "Zzz"
+
+[node name="PopupPanel" type="Panel" parent="."]
+visible = false
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -260.0
+offset_top = -170.0
+offset_right = 260.0
+offset_bottom = 170.0
+script = ExtResource("3")
+
+[node name="Root" type="VBoxContainer" parent="PopupPanel"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = 12.0
+offset_right = -12.0
+offset_bottom = -12.0
+theme_override_constants/separation = 8
+
+[node name="StatusRow" type="HBoxContainer" parent="PopupPanel/Root"]
+theme_override_constants/separation = 8
+
+[node name="StatusLabel" type="Label" parent="PopupPanel/Root/StatusRow"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+text = "采集：探活中 | DeepSeek：检查中"
+
+[node name="GoSettingsButton" type="Button" parent="PopupPanel/Root/StatusRow"]
+unique_name_in_owner = true
+text = "去设置"
+visible = false
+
+[node name="Tabs" type="TabContainer" parent="PopupPanel/Root"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="任务" type="Control" parent="PopupPanel/Root/Tabs"]
+script = ExtResource("4")
+
+[node name="TaskRoot" type="VBoxContainer" parent="PopupPanel/Root/Tabs/任务"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="PopupPanel/Root/Tabs/任务/TaskRoot"]
+text = "任务"
+
+[node name="AddRow" type="HBoxContainer" parent="PopupPanel/Root/Tabs/任务/TaskRoot"]
+theme_override_constants/separation = 8
+
+[node name="TaskInput" type="LineEdit" parent="PopupPanel/Root/Tabs/任务/TaskRoot/AddRow"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+placeholder_text = "输入任务，回车新增"
+
+[node name="AddButton" type="Button" parent="PopupPanel/Root/Tabs/任务/TaskRoot/AddRow"]
+unique_name_in_owner = true
+text = "新增"
+
+[node name="FilterRow" type="HBoxContainer" parent="PopupPanel/Root/Tabs/任务/TaskRoot"]
+theme_override_constants/separation = 8
+
+[node name="ShowDoneToggle" type="CheckButton" parent="PopupPanel/Root/Tabs/任务/TaskRoot/FilterRow"]
+unique_name_in_owner = true
+text = "显示已完成"
+button_pressed = false
+
+[node name="ShowArchivedToggle" type="CheckButton" parent="PopupPanel/Root/Tabs/任务/TaskRoot/FilterRow"]
+unique_name_in_owner = true
+text = "显示已归档"
+button_pressed = false
+
+[node name="ListScroll" type="ScrollContainer" parent="PopupPanel/Root/Tabs/任务/TaskRoot"]
+size_flags_vertical = 3
+
+[node name="TaskList" type="VBoxContainer" parent="PopupPanel/Root/Tabs/任务/TaskRoot/ListScroll"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="报表" type="Control" parent="PopupPanel/Root/Tabs"]
+script = ExtResource("5")
+
+[node name="ReportRoot" type="VBoxContainer" parent="PopupPanel/Root/Tabs/报表"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/separation = 8
+
+[node name="ActionRow" type="HBoxContainer" parent="PopupPanel/Root/Tabs/报表/ReportRoot"]
+theme_override_constants/separation = 8
+
+[node name="SummarizeButton" type="Button" parent="PopupPanel/Root/Tabs/报表/ReportRoot/ActionRow"]
+unique_name_in_owner = true
+text = "运行总结"
+
+[node name="DailyButton" type="Button" parent="PopupPanel/Root/Tabs/报表/ReportRoot/ActionRow"]
+unique_name_in_owner = true
+text = "日报"
+
+[node name="WeeklyButton" type="Button" parent="PopupPanel/Root/Tabs/报表/ReportRoot/ActionRow"]
+unique_name_in_owner = true
+text = "周报"
+
+[node name="MonthlyButton" type="Button" parent="PopupPanel/Root/Tabs/报表/ReportRoot/ActionRow"]
+unique_name_in_owner = true
+text = "月报"
+
+[node name="SemiannualButton" type="Button" parent="PopupPanel/Root/Tabs/报表/ReportRoot/ActionRow"]
+unique_name_in_owner = true
+text = "半年报"
+
+[node name="OutputEdit" type="TextEdit" parent="PopupPanel/Root/Tabs/报表/ReportRoot"]
+unique_name_in_owner = true
+size_flags_vertical = 3
+wrap_mode = 1
+
+[node name="陪聊" type="Control" parent="PopupPanel/Root/Tabs"]
+script = ExtResource("7")
+
+[node name="ChatRoot" type="VBoxContainer" parent="PopupPanel/Root/Tabs/陪聊"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/separation = 8
+
+[node name="ChatOutput" type="TextEdit" parent="PopupPanel/Root/Tabs/陪聊/ChatRoot"]
+unique_name_in_owner = true
+size_flags_vertical = 3
+wrap_mode = 1
+
+[node name="ChatRow" type="HBoxContainer" parent="PopupPanel/Root/Tabs/陪聊/ChatRoot"]
+theme_override_constants/separation = 8
+
+[node name="ChatInput" type="LineEdit" parent="PopupPanel/Root/Tabs/陪聊/ChatRoot/ChatRow"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+placeholder_text = "输入聊天内容或粘贴新闻，回车发送"
+
+[node name="SendButton" type="Button" parent="PopupPanel/Root/Tabs/陪聊/ChatRoot/ChatRow"]
+unique_name_in_owner = true
+text = "发送"
+
+[node name="AsNewsToggle" type="CheckButton" parent="PopupPanel/Root/Tabs/陪聊/ChatRoot/ChatRow"]
+unique_name_in_owner = true
+text = "当作新闻"
+button_pressed = false
+
+[node name="设置" type="Control" parent="PopupPanel/Root/Tabs"]
+script = ExtResource("6")
+
+[node name="SettingsRoot" type="VBoxContainer" parent="PopupPanel/Root/Tabs/设置"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/separation = 8
+
+[node name="SafetyRow" type="HBoxContainer" parent="PopupPanel/Root/Tabs/设置/SettingsRoot"]
+theme_override_constants/separation = 8
+
+[node name="PauseCaptureToggle" type="CheckButton" parent="PopupPanel/Root/Tabs/设置/SettingsRoot/SafetyRow"]
+unique_name_in_owner = true
+text = "暂停采集"
+button_pressed = false
+
+[node name="EmergencyStopButton" type="Button" parent="PopupPanel/Root/Tabs/设置/SettingsRoot/SafetyRow"]
+unique_name_in_owner = true
+text = "紧急停止"
+
+[node name="Row1" type="HBoxContainer" parent="PopupPanel/Root/Tabs/设置/SettingsRoot"]
+theme_override_constants/separation = 8
+
+[node name="EndpointLabel" type="Label" parent="PopupPanel/Root/Tabs/设置/SettingsRoot/Row1"]
+text = "Endpoint"
+
+[node name="EndpointInput" type="LineEdit" parent="PopupPanel/Root/Tabs/设置/SettingsRoot/Row1"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+placeholder_text = "https://api.deepseek.com/v1/chat/completions"
+
+[node name="Row2" type="HBoxContainer" parent="PopupPanel/Root/Tabs/设置/SettingsRoot"]
+theme_override_constants/separation = 8
+
+[node name="ModelLabel" type="Label" parent="PopupPanel/Root/Tabs/设置/SettingsRoot/Row2"]
+text = "Model"
+
+[node name="ModelInput" type="LineEdit" parent="PopupPanel/Root/Tabs/设置/SettingsRoot/Row2"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+placeholder_text = "deepseek-chat"
+
+[node name="Row3" type="HBoxContainer" parent="PopupPanel/Root/Tabs/设置/SettingsRoot"]
+theme_override_constants/separation = 8
+
+[node name="ApiKeyLabel" type="Label" parent="PopupPanel/Root/Tabs/设置/SettingsRoot/Row3"]
+text = "API Key"
+
+[node name="ApiKeyInput" type="LineEdit" parent="PopupPanel/Root/Tabs/设置/SettingsRoot/Row3"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+secret = true
+placeholder_text = "在此粘贴 API Key（不会明文保存）"
+
+[node name="ClearKeyButton" type="Button" parent="PopupPanel/Root/Tabs/设置/SettingsRoot/Row3"]
+unique_name_in_owner = true
+text = "清空"
+
+[node name="Row4" type="HBoxContainer" parent="PopupPanel/Root/Tabs/设置/SettingsRoot"]
+theme_override_constants/separation = 8
+
+[node name="UserNameLabel" type="Label" parent="PopupPanel/Root/Tabs/设置/SettingsRoot/Row4"]
+text = "称呼"
+
+[node name="UserNameInput" type="LineEdit" parent="PopupPanel/Root/Tabs/设置/SettingsRoot/Row4"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+
+[node name="ReportPromptTitle" type="Label" parent="PopupPanel/Root/Tabs/设置/SettingsRoot"]
+text = "Report System Prompt"
+
+[node name="ReportPromptEdit" type="TextEdit" parent="PopupPanel/Root/Tabs/设置/SettingsRoot"]
+unique_name_in_owner = true
+size_flags_vertical = 3
+custom_minimum_size = Vector2(0, 80)
+wrap_mode = 1
+
+[node name="ChatPromptTitle" type="Label" parent="PopupPanel/Root/Tabs/设置/SettingsRoot"]
+text = "Chat System Prompt"
+
+[node name="ChatPromptEdit" type="TextEdit" parent="PopupPanel/Root/Tabs/设置/SettingsRoot"]
+unique_name_in_owner = true
+size_flags_vertical = 3
+custom_minimum_size = Vector2(0, 80)
+wrap_mode = 1
+
+[node name="SummarizePromptTitle" type="Label" parent="PopupPanel/Root/Tabs/设置/SettingsRoot"]
+text = "Summarize System Prompt"
+
+[node name="SummarizePromptEdit" type="TextEdit" parent="PopupPanel/Root/Tabs/设置/SettingsRoot"]
+unique_name_in_owner = true
+size_flags_vertical = 3
+custom_minimum_size = Vector2(0, 80)
+wrap_mode = 1
+
+[node name="MergePromptTitle" type="Label" parent="PopupPanel/Root/Tabs/设置/SettingsRoot"]
+text = "Merge System Prompt"
+
+[node name="MergePromptEdit" type="TextEdit" parent="PopupPanel/Root/Tabs/设置/SettingsRoot"]
+unique_name_in_owner = true
+size_flags_vertical = 3
+custom_minimum_size = Vector2(0, 80)
+wrap_mode = 1
+
+[node name="ButtonsRow" type="HBoxContainer" parent="PopupPanel/Root/Tabs/设置/SettingsRoot"]
+theme_override_constants/separation = 8
+
+[node name="SaveButton" type="Button" parent="PopupPanel/Root/Tabs/设置/SettingsRoot/ButtonsRow"]
+unique_name_in_owner = true
+text = "保存"
+
+[node name="ResetButton" type="Button" parent="PopupPanel/Root/Tabs/设置/SettingsRoot/ButtonsRow"]
+unique_name_in_owner = true
+text = "恢复默认提示词"
+
+[node name="StateMachine" type="Node" parent="."]
+script = ExtResource("2")
+
+[node name="TaskStore" type="Node" parent="."]
+script = ExtResource("8")
+
+[node name="MemoryStore" type="Node" parent="."]
+script = ExtResource("9")
+
+[node name="ConfigStore" type="Node" parent="."]
+script = ExtResource("10")
+
+[node name="DeepSeekClient" type="Node" parent="."]
+script = ExtResource("11")
+
+[node name="SummarizationPipeline" type="Node" parent="."]
+script = ExtResource("12")
+
+[node name="ReportGenerator" type="Node" parent="."]
+script = ExtResource("13")
+
+[node name="ChatService" type="Node" parent="."]
+script = ExtResource("14")
+
+[node name="HelperBridge" type="Node" parent="."]
+script = ExtResource("15")
