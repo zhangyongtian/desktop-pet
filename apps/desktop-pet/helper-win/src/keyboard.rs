@@ -82,7 +82,7 @@ use windows::Win32::UI::Input::KeyboardAndMouse::{
 #[cfg(windows)]
 use windows::Win32::UI::WindowsAndMessaging::{
     DispatchMessageW, GetMessageW, PostThreadMessageW, SetWindowsHookExW, TranslateMessage,
-    UnhookWindowsHookEx, HC_ACTION, MSG, WM_KEYDOWN, WM_QUIT, WM_SYSKEYDOWN,
+    HHOOK, UnhookWindowsHookEx, HC_ACTION, MSG, WM_KEYDOWN, WM_QUIT, WM_SYSKEYDOWN,
 };
 #[cfg(windows)]
 use windows::Win32::System::Threading::GetCurrentThreadId;
@@ -146,7 +146,7 @@ fn should_ignore_for_text() -> bool {
 fn vk_to_char(vk: u32, scan_code: u32) -> Option<char> {
     unsafe {
         let mut state = [0u8; 256];
-        if !GetKeyboardState(&mut state).as_bool() {
+        if !GetKeyboardState(state.as_mut_ptr()).as_bool() {
             return None;
         }
         let layout = GetKeyboardLayout(0);
@@ -172,26 +172,26 @@ fn vk_to_char(vk: u32, scan_code: u32) -> Option<char> {
 extern "system" fn low_level_keyboard_proc(code: i32, w_param: WPARAM, l_param: LPARAM) -> LRESULT {
     unsafe {
         if code != HC_ACTION {
-            return CallNextHookEx(None, code, w_param, l_param);
+            return CallNextHookEx(HHOOK(0), code, w_param, l_param);
         }
 
         let ctx = match HOOK_CTX.get() {
             Some(c) => c.clone(),
-            None => return CallNextHookEx(None, code, w_param, l_param),
+            None => return CallNextHookEx(HHOOK(0), code, w_param, l_param),
         };
         if ctx.stop.load(Ordering::Relaxed) {
-            return CallNextHookEx(None, code, w_param, l_param);
+            return CallNextHookEx(HHOOK(0), code, w_param, l_param);
         }
 
         if ctx.state.is_paused() {
             ctx.buf.lock().unwrap().clear();
             *ctx.last_activity.lock().unwrap() = Instant::now();
-            return CallNextHookEx(None, code, w_param, l_param);
+            return CallNextHookEx(HHOOK(0), code, w_param, l_param);
         }
 
         let msg = w_param.0 as u32;
         if msg != WM_KEYDOWN.0 && msg != WM_SYSKEYDOWN.0 {
-            return CallNextHookEx(None, code, w_param, l_param);
+            return CallNextHookEx(HHOOK(0), code, w_param, l_param);
         }
 
         let kb: &KBDLLHOOKSTRUCT = &*(l_param.0 as *const KBDLLHOOKSTRUCT);
@@ -211,31 +211,31 @@ extern "system" fn low_level_keyboard_proc(code: i32, w_param: WPARAM, l_param: 
                 }
             }
             *ctx.last_activity.lock().unwrap() = Instant::now();
-            return CallNextHookEx(None, code, w_param, l_param);
+            return CallNextHookEx(HHOOK(0), code, w_param, l_param);
         }
 
         if vk == VK_BACK.0 as u32 {
             let mut buf = ctx.buf.lock().unwrap();
             buf.pop();
             *ctx.last_activity.lock().unwrap() = Instant::now();
-            return CallNextHookEx(None, code, w_param, l_param);
+            return CallNextHookEx(HHOOK(0), code, w_param, l_param);
         }
 
         if vk == VK_RETURN.0 as u32 || vk == VK_TAB.0 as u32 {
             flush_buffer(&ctx);
             *ctx.last_activity.lock().unwrap() = Instant::now();
-            return CallNextHookEx(None, code, w_param, l_param);
+            return CallNextHookEx(HHOOK(0), code, w_param, l_param);
         }
 
         if vk == VK_SPACE.0 as u32 {
             flush_buffer(&ctx);
             *ctx.last_activity.lock().unwrap() = Instant::now();
-            return CallNextHookEx(None, code, w_param, l_param);
+            return CallNextHookEx(HHOOK(0), code, w_param, l_param);
         }
 
         if should_ignore_for_text() {
             *ctx.last_activity.lock().unwrap() = Instant::now();
-            return CallNextHookEx(None, code, w_param, l_param);
+            return CallNextHookEx(HHOOK(0), code, w_param, l_param);
         }
 
         if let Some(ch) = vk_to_char(vk, scan) {
@@ -252,7 +252,7 @@ extern "system" fn low_level_keyboard_proc(code: i32, w_param: WPARAM, l_param: 
         }
 
         *ctx.last_activity.lock().unwrap() = Instant::now();
-        CallNextHookEx(None, code, w_param, l_param)
+        CallNextHookEx(HHOOK(0), code, w_param, l_param)
     }
 }
 
