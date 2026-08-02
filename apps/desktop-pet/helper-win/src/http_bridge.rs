@@ -1,6 +1,5 @@
 use crate::events::{AppEvent, ControlRequest, ControlResponse, GodotInbound};
 use crate::state::SharedState;
-use std::io::Read;
 use std::sync::mpsc::Sender;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};

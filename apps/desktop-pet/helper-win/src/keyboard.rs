@@ -101,7 +101,7 @@ static HOOK_CTX: OnceLock<Arc<HookCtx>> = OnceLock::new();
 #[cfg(windows)]
 static HOOK_THREAD_ID: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
 #[cfg(windows)]
-static HOOK_HANDLE: std::sync::atomic::AtomicIsize = std::sync::atomic::AtomicIsize::new(0);
+static HOOK_HANDLE: std::sync::atomic::AtomicPtr<std::ffi::c_void> = std::sync::atomic::AtomicPtr::new(std::ptr::null_mut());
 
 #[cfg(windows)]
 fn flush_buffer(ctx: &HookCtx) {
@@ -172,26 +172,26 @@ fn vk_to_char(vk: u32, scan_code: u32) -> Option<char> {
 extern "system" fn low_level_keyboard_proc(code: i32, w_param: WPARAM, l_param: LPARAM) -> LRESULT {
     unsafe {
         if code != HC_ACTION {
-            return CallNextHookEx(HHOOK(0), code, w_param, l_param);
+            return CallNextHookEx(HHOOK(std::ptr::null_mut()), code, w_param, l_param);
         }
 
         let ctx = match HOOK_CTX.get() {
             Some(c) => c.clone(),
-            None => return CallNextHookEx(HHOOK(0), code, w_param, l_param),
+            None => return CallNextHookEx(HHOOK(std::ptr::null_mut()), code, w_param, l_param),
         };
         if ctx.stop.load(Ordering::Relaxed) {
-            return CallNextHookEx(HHOOK(0), code, w_param, l_param);
+            return CallNextHookEx(HHOOK(std::ptr::null_mut()), code, w_param, l_param);
         }
 
         if ctx.state.is_paused() {
             ctx.buf.lock().unwrap().clear();
             *ctx.last_activity.lock().unwrap() = Instant::now();
-            return CallNextHookEx(HHOOK(0), code, w_param, l_param);
+            return CallNextHookEx(HHOOK(std::ptr::null_mut()), code, w_param, l_param);
         }
 
         let msg = w_param.0 as u32;
         if msg != WM_KEYDOWN.0 && msg != WM_SYSKEYDOWN.0 {
-            return CallNextHookEx(HHOOK(0), code, w_param, l_param);
+            return CallNextHookEx(HHOOK(std::ptr::null_mut()), code, w_param, l_param);
         }
 
         let kb: &KBDLLHOOKSTRUCT = &*(l_param.0 as *const KBDLLHOOKSTRUCT);
@@ -211,31 +211,31 @@ extern "system" fn low_level_keyboard_proc(code: i32, w_param: WPARAM, l_param: 
                 }
             }
             *ctx.last_activity.lock().unwrap() = Instant::now();
-            return CallNextHookEx(HHOOK(0), code, w_param, l_param);
+            return CallNextHookEx(HHOOK(std::ptr::null_mut()), code, w_param, l_param);
         }
 
         if vk == VK_BACK.0 as u32 {
             let mut buf = ctx.buf.lock().unwrap();
             buf.pop();
             *ctx.last_activity.lock().unwrap() = Instant::now();
-            return CallNextHookEx(HHOOK(0), code, w_param, l_param);
+            return CallNextHookEx(HHOOK(std::ptr::null_mut()), code, w_param, l_param);
         }
 
         if vk == VK_RETURN.0 as u32 || vk == VK_TAB.0 as u32 {
             flush_buffer(&ctx);
             *ctx.last_activity.lock().unwrap() = Instant::now();
-            return CallNextHookEx(HHOOK(0), code, w_param, l_param);
+            return CallNextHookEx(HHOOK(std::ptr::null_mut()), code, w_param, l_param);
         }
 
         if vk == VK_SPACE.0 as u32 {
             flush_buffer(&ctx);
             *ctx.last_activity.lock().unwrap() = Instant::now();
-            return CallNextHookEx(HHOOK(0), code, w_param, l_param);
+            return CallNextHookEx(HHOOK(std::ptr::null_mut()), code, w_param, l_param);
         }
 
         if should_ignore_for_text() {
             *ctx.last_activity.lock().unwrap() = Instant::now();
-            return CallNextHookEx(HHOOK(0), code, w_param, l_param);
+            return CallNextHookEx(HHOOK(std::ptr::null_mut()), code, w_param, l_param);
         }
 
         if let Some(ch) = vk_to_char(vk, scan) {
@@ -252,7 +252,7 @@ extern "system" fn low_level_keyboard_proc(code: i32, w_param: WPARAM, l_param: 
         }
 
         *ctx.last_activity.lock().unwrap() = Instant::now();
-        CallNextHookEx(HHOOK(0), code, w_param, l_param)
+        CallNextHookEx(HHOOK(std::ptr::null_mut()), code, w_param, l_param)
     }
 }
 
@@ -313,14 +313,14 @@ impl KeyboardHook for WindowsKeyboardHook {
         self.join = Some(std::thread::spawn(move || unsafe {
             HOOK_THREAD_ID.store(GetCurrentThreadId(), Ordering::Relaxed);
 
-            let hook = match SetWindowsHookExW(WH_KEYBOARD_LL, Some(low_level_keyboard_proc), HINSTANCE(0), 0) {
+            let hook = match SetWindowsHookExW(WH_KEYBOARD_LL, Some(low_level_keyboard_proc), HINSTANCE(std::ptr::null_mut()), 0) {
                 Ok(h) => h,
                 Err(_) => {
                     eprintln!("SetWindowsHookExW(WH_KEYBOARD_LL) failed");
                     return;
                 }
             };
-            if hook.0 == 0 {
+            if hook.0.is_null() {
                 eprintln!("SetWindowsHookExW(WH_KEYBOARD_LL) returned null");
                 return;
             }
@@ -333,7 +333,7 @@ impl KeyboardHook for WindowsKeyboardHook {
             }
 
             let _ = UnhookWindowsHookEx(hook);
-            HOOK_HANDLE.store(0, Ordering::Relaxed);
+            HOOK_HANDLE.store(std::ptr::null_mut(), Ordering::Relaxed);
         }));
 
         Ok(())
