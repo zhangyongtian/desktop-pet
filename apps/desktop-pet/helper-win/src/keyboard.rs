@@ -190,7 +190,7 @@ extern "system" fn low_level_keyboard_proc(code: i32, w_param: WPARAM, l_param: 
         }
 
         let msg = w_param.0 as u32;
-        if msg != WM_KEYDOWN && msg != WM_SYSKEYDOWN {
+        if msg != WM_KEYDOWN.0 && msg != WM_SYSKEYDOWN.0 {
             return CallNextHookEx(None, code, w_param, l_param);
         }
 
@@ -313,15 +313,21 @@ impl KeyboardHook for WindowsKeyboardHook {
         self.join = Some(std::thread::spawn(move || unsafe {
             HOOK_THREAD_ID.store(GetCurrentThreadId(), Ordering::Relaxed);
 
-            let hook = SetWindowsHookExW(WH_KEYBOARD_LL, Some(low_level_keyboard_proc), HINSTANCE(0), 0);
+            let hook = match SetWindowsHookExW(WH_KEYBOARD_LL, Some(low_level_keyboard_proc), HINSTANCE(0), 0) {
+                Ok(h) => h,
+                Err(_) => {
+                    eprintln!("SetWindowsHookExW(WH_KEYBOARD_LL) failed");
+                    return;
+                }
+            };
             if hook.0 == 0 {
-                eprintln!("SetWindowsHookExW(WH_KEYBOARD_LL) failed");
+                eprintln!("SetWindowsHookExW(WH_KEYBOARD_LL) returned null");
                 return;
             }
             HOOK_HANDLE.store(hook.0, Ordering::Relaxed);
 
             let mut msg = MSG::default();
-            while GetMessageW(&mut msg, None, 0, 0).into() {
+            while GetMessageW(&mut msg, None, 0, 0).as_bool() {
                 TranslateMessage(&msg);
                 DispatchMessageW(&msg);
             }
