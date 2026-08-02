@@ -2,6 +2,8 @@ class_name PetVisual
 extends Control
 
 @export var idle_res_path: String = "res://assets/pet/idle.png"
+@export var busy_res_path: String = "res://assets/pet/busy.png"
+@export var sleep_res_path: String = "res://assets/pet/sleep.png"
 
 @export var sleep_idle_seconds: float = 60.0
 @export var busy_hold_seconds: float = 2.0
@@ -13,6 +15,8 @@ var _busy_timer: Timer = null
 var _tween: Tween = null
 
 var _idle_tex: Texture2D = null
+var _busy_tex: Texture2D = null
+var _sleep_tex: Texture2D = null
 var _mode: String = "idle"
 
 
@@ -66,6 +70,8 @@ func _restart_sleep_timer() -> void:
 
 func _load_textures() -> void:
 	_idle_tex = _try_load_texture(idle_res_path)
+	_busy_tex = _try_load_texture(busy_res_path)
+	_sleep_tex = _try_load_texture(sleep_res_path)
 	if _texture_button != null and _idle_tex != null:
 		_texture_button.texture_normal = _idle_tex
 		_texture_button.texture_pressed = _idle_tex
@@ -95,6 +101,11 @@ func _set_mode(mode: String) -> void:
 
 func _apply_idle() -> void:
 	if _texture_button != null:
+		if _idle_tex != null:
+			_texture_button.texture_normal = _idle_tex
+			_texture_button.texture_pressed = _idle_tex
+			_texture_button.texture_hover = _idle_tex
+			_texture_button.texture_focused = _idle_tex
 		_texture_button.modulate = Color(1, 1, 1, 1)
 		_texture_button.rotation = 0.0
 		_texture_button.scale = Vector2.ONE
@@ -104,6 +115,11 @@ func _apply_idle() -> void:
 
 func _apply_busy() -> void:
 	if _texture_button != null:
+		if _busy_tex != null:
+			_texture_button.texture_normal = _busy_tex
+			_texture_button.texture_pressed = _busy_tex
+			_texture_button.texture_hover = _busy_tex
+			_texture_button.texture_focused = _busy_tex
 		_texture_button.modulate = Color(1, 1, 1, 1)
 		_tween = create_tween()
 		_tween.set_loops()
@@ -121,6 +137,11 @@ func _apply_busy() -> void:
 
 func _apply_sleep() -> void:
 	if _texture_button != null:
+		if _sleep_tex != null:
+			_texture_button.texture_normal = _sleep_tex
+			_texture_button.texture_pressed = _sleep_tex
+			_texture_button.texture_hover = _sleep_tex
+			_texture_button.texture_focused = _sleep_tex
 		_texture_button.modulate = Color(0.8, 0.8, 0.8, 1)
 		_texture_button.rotation = 0.0
 		_texture_button.scale = Vector2.ONE
@@ -157,4 +178,3 @@ func _find_zzz_label() -> Label:
 	if n != null and n is Label:
 		return n as Label
 	return null
-
