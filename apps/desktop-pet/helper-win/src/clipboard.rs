@@ -66,7 +66,7 @@ use windows::Win32::Foundation::{HANDLE, HGLOBAL, HWND};
 #[cfg(windows)]
 use windows::Win32::System::Memory::{GlobalLock, GlobalUnlock};
 #[cfg(windows)]
-use windows::Win32::UI::WindowsAndMessaging::{
+use windows::Win32::System::DataExchange::{
     CloseClipboard, GetClipboardData, GetClipboardSequenceNumber, IsClipboardFormatAvailable,
     OpenClipboard, CF_UNICODETEXT,
 };
